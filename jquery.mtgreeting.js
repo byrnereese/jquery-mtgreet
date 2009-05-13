@@ -90,6 +90,7 @@
 	  u.is_anonymous = false;
 	} else {
 	  u.is_anonymous = true;
+          u.is_authenticated = false;
 	  u.can_post = false;
 	  u.is_author = false;
 	  u.is_banned = false;
@@ -108,6 +109,7 @@
 	    //alert('user is not logged in, construct anonymous user');
 	    $.fn.movabletype.user = {};
 	    $.fn.movabletype.user.is_anonymous = true;
+	    $.fn.movabletype.user.is_authenticated = false;
 	    $.fn.movabletype.user.can_post = false;
 	    $.fn.movabletype.user.is_author = false;
 	    $.fn.movabletype.user.is_banned = false;
@@ -121,21 +123,32 @@
       $.fn.movabletype.fetchUser = function(cb) {
 	//alert('fetching user');
 	/* if no callback set, then set the default */
-	if (!cb) { cb = function(u) { return $.fn.movabletype.setUser(u); } }; 
-	if ( cb.call() && $.fn.movabletype.getUser() ) {
-	  //alert('changing href');
+	if (!cb) { 
+          cb = function(u) { 
+            //alert("fetchUser was not given a callback. setting default cb.");
+            return $.fn.movabletype.setUser(u); 
+          } 
+        }; 
+	//	if ( cb.call() && $.fn.movabletype.getUser() ) {
+	if ( $.fn.movabletype.getUser() && $.fn.movabletype.getUser().is_authenticated ) {
+	  // user is logged into current domain...
 	  var url = document.URL;
 	  url = url.replace(/#.+$/, '');
 	  url += '#comments-open';
 	  location.href = url;
+	  // TODO fire - on authevent
+	  cb.call($.fn.movabletype.getUser());
 	} else {
-	  //alert('fetching user via jsonp');
+	  //alert('User does not appear to be logged in locally. Fetching user via jsonp...');
 	  // we aren't using AJAX for this, since we may have to request
 	  // from a different domain. JSONP to the rescue.
 	  mtFetchedUser = true;
-	  var url = settings.mtScriptURL + '?__mode=session_js&blog_id=' + settings.blogID+'&jsonp=?';
+	  var url = settings.mtScriptURL + '?__mode=session_js&blog_id=' + settings.blogID + '&jsonp=?';
+          //alert("Fetching user from: " + url);
 	  // this is asynchronous, so it will return prior to the user being saved
-	  $.getJSON(url,function(data) { cb(data) } );
+	  $.getJSON(url,function(data) { 
+	      cb(data) 
+          });
 	}
       };
       $.fn.movabletype.setUser = function(u) {
@@ -255,7 +268,7 @@
 		window.location.hash.match( /^#_log(in|out)/ );
 		if (RegExp.$1 == 'in') {
 		  $.fn.movabletype.fetchUser(function(u) { 
-		      //alert("setting user from fetchUser callback...");
+		      //alert("Calling fetchUser from #log(in|out) initialization.");
 		      $.fn.movabletype.setUser(u); 
 		      var url = document.URL;
 		      url = url.replace(/#.+$/, '');
@@ -403,14 +416,16 @@
 	  self.html(phrase);
 	  $.fn.movabletype.clearUser(); // clear any 'anonymous' user cookie to allow sign in
 	  $.fn.movabletype.fetchUser(function(u) {
+              //alert("Calling fetchUser from _onSignInClick");
 	      //var u = $.fn.movabletype.getUser();
 	      //alert("user object is: " + u);
 	      if (u && u.is_authenticated) {
-		//alert("setting user from onSignInClick callback...");
+		//alert("User is authenticated. Setting user from onSignInClick callback...");
 		$.fn.movabletype.setUser(u);
 		_insertText(self);
 	      } else {
 		// user really isn't logged in; so let's do this!
+		//alert("User is not logged in. Redirect to sign in page.");
 		_signIn();
 	      }
 	  });
@@ -428,7 +443,7 @@
 		    //'You do not have permission to comment on this blog. (<a href="javascript:void(0);" onclick="return mtSignOutOnClick();">sign out</a>)';
 		} else {
 		    if ( u.is_author ) {
-			profile_link = '<a href="'+settings.mtScriptURL+'?__mode=edit_profile&blog_id=3';
+			profile_link = '<a href="'+settings.mtScriptURL+'?__mode=edit_profile&blog_id=' + settings.blogID;
 			if (settings.entryId)
 			    profile_link += '&entry_id=' + settings.entryId;
 			profile_link += '">' + settings.editProfileText + '</a>';
