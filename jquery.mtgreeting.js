@@ -1,4 +1,25 @@
 (function($){
+    $.fn.onAuthEvent = function( fn ) {
+      return this.each(function() {
+          $(this).bind("onAuthEvent", fn);
+	  $.fn.onAuthEvent.listeners.push( $(this) );
+	  if ($.fn.onAuthEvent.happened) {
+	    $(this).trigger("onUserUnauthed");
+	  }
+      });
+    };
+    $.fn.onAuthEvent.listeners = [];
+    $.fn.onAuthEvent.fire = function() {
+      //alert("firing onAuthEvent");
+      $.fn.onAuthEvent.happened = true;
+      for (var i in $.fn.onAuthEvent.listeners) {
+	var lsnr = $.fn.onAuthEvent.listeners[i];
+	lsnr.trigger('onAuthEvent');
+      }
+      //alert("needsauth = false");
+      $.fn.movabletype.needsAuth = false;
+    };
+
     $.fn.onUserUnauthed = function( fn ) {
       return this.each(function() {
           $(this).bind("onUserUnauthed", fn);
@@ -10,6 +31,8 @@
     };
     $.fn.onUserUnauthed.listeners = [];
     $.fn.onUserUnauthed.fire = function() {
+      //alert("firing onUserUnauthed");
+      $.fn.onAuthEvent.happened = true;
       for (var i in $.fn.onUserUnauthed.listeners) {
 	var lsnr = $.fn.onUserUnauthed.listeners[i];
 	lsnr.trigger('onUserUnauthed');
@@ -27,14 +50,17 @@
     };
     $.fn.onUserAuthed.listeners = [];
     $.fn.onUserAuthed.fire = function() {
+      //alert("firing onUserAuthed");
+      $.fn.onAuthEvent.happened = true;
       for (var i in $.fn.onUserAuthed.listeners) {
 	var lsnr = $.fn.onUserAuthed.listeners[i];
 	lsnr.trigger('onUserAuthed');
       }
     };
-    $.fn.movabletype = function(options) {
-      var settings = $.extend( {}, $.fn.movabletype.defaults, options);
 
+    $.fn.movabletype = function(options) {
+      $.fn.movabletype.settings = $.extend( {}, $.fn.movabletype.defaults, options);
+      var settings = $.fn.movabletype.settings;
       var _escapeJS = function(s) { return s.replace(/\'/g, "&apos;"); }
       var _unescapeJS = function(s) {	return s.replace(/&apos;/g, "'"); }
       var _getCookie = function() {
@@ -72,16 +98,14 @@
 	return u;
       };
       var calledOnUserSignIn = false;
-      var _getUser = function() {
+      $.fn.movabletype.getUser = function() {
 	if (!$.fn.movabletype.user) {
 	  var cookie = _getCookie();
-	  if (!cookie) {
-	    //alert("no cookie!");
-	  } else {
+	  if (cookie) {
             $.fn.movabletype.user = _unbakeCookie(cookie);
           }
 	  if (!$.fn.movabletype.user) {
-	    //alert('user is anonymous');
+	    //alert('user is not logged in, construct anonymous user');
 	    $.fn.movabletype.user = {};
 	    $.fn.movabletype.user.is_anonymous = true;
 	    $.fn.movabletype.user.can_post = false;
@@ -89,46 +113,48 @@
 	    $.fn.movabletype.user.is_banned = false;
 	    $.fn.movabletype.user.is_trusted = false;
 	  } else {
-	    /*
-	    alert('user is authenticated');
-	    if (!calledOnUserSignIn)
-	      settings.onUserSignIn();
-	    */
+	    //alert('return user object');
 	  }
 	}
 	return $.fn.movabletype.user;
       };
       $.fn.movabletype.fetchUser = function(cb) {
-	if ( !cb && _getUser() ) {
+	//alert('fetching user');
+	/* if no callback set, then set the default */
+	if (!cb) { cb = function(u) { return $.fn.movabletype.setUser(u); } }; 
+	if ( cb.call() && $.fn.movabletype.getUser() ) {
+	  //alert('changing href');
 	  var url = document.URL;
 	  url = url.replace(/#.+$/, '');
 	  url += '#comments-open';
 	  location.href = url;
 	} else {
+	  //alert('fetching user via jsonp');
 	  // we aren't using AJAX for this, since we may have to request
 	  // from a different domain. JSONP to the rescue.
 	  mtFetchedUser = true;
 	  var url = settings.mtScriptURL + '?__mode=session_js&blog_id=' + settings.blogID+'&jsonp=?';
+	  // this is asynchronous, so it will return prior to the user being saved
 	  $.getJSON(url,function(data) { cb(data) } );
-	}	
+	}
       };
       $.fn.movabletype.setUser = function(u) {
 	if (u) {
 	  // persist this
+	  //alert("setUser()...");
 	  $.fn.movabletype.user = u;
+	  $.fn.onUserAuthed.fire.call();
+	  $.fn.onAuthEvent.fire.call();
 	  _saveUser();
-	  // fire callback/event
-	  //$.fn.movabletype.settings.onUserSignIn();
-	  // sync up user greeting
-	  //_insertText(self);
 	}
+	return $.fn.movabletype.user;
       };
       var _saveUser = function(f) {
 	//alert('Saving user...');
 	// We can't reliably store the user cookie during a preview.
 	// TODO - should isPreview be in the MT content of greeting context?
 	if (settings.isPreview) return;
-	var u = _getUser();
+	var u = $.fn.movabletype.getUser();
 	if (f && (!u || u.is_anonymous)) {
 	  if ( !u ) {
 	    u = {};
@@ -210,19 +236,60 @@
 	_deleteCookie();
       };
       this.initialize = function() {
-	this.user = _getUser();
+	//alert('initilizing $.fn.movabletype');
+	this.user = $.fn.movabletype.getUser();
 	if ($.meta){
 	  settings = $.extend({}, settings, this.data());
 	}
-	if (this.user.is_authenticated) {
-	  $.fn.onUserAuthed.fire.call();
-	} else {
-	  $.fn.onUserUnauthed.fire.call();
-	}
+
+	$(document).ready( function() {
+	    if (settings.blogID && settings.registrationRequired) {
+	      /***
+	       * If request contains a '#_login' or '#_logout' hash, use this to
+	       * also delete the blog-side user cookie, since we're coming back from
+	       * a login, logout or edit profile operation.
+	       */
+	      if ($.fn.movabletype.needsAuth) {
+		// clear any logged in state
+		$.fn.movabletype.clearUser();
+		window.location.hash.match( /^#_log(in|out)/ );
+		if (RegExp.$1 == 'in') {
+		  $.fn.movabletype.fetchUser(function(u) { 
+		      //alert("setting user from fetchUser callback...");
+		      $.fn.movabletype.setUser(u); 
+		      var url = document.URL;
+		      url = url.replace(/#.+$/, '');
+		      url += '#loggedin';
+		      location.href = url;
+		    });
+		  // TODO - should I fire an auth event here?
+		} else if (RegExp.$1 == "out") {
+		  //alert("firing onUserUnauthed");
+		  $.fn.onUserUnauthed.fire.call();
+		  $.fn.onAuthEvent.fire.call();
+		  var url = document.URL;
+		  url = url.replace(/#.+$/, '');
+		  url += '#loggedout';
+		  location.href = url;
+		}
+	      } else {
+		/***
+		 * Uncondition this call to fetch the current user state (if available)
+		 * from MT upon page load if no user cookie is already present.
+		 * This is okay if you have a private install, such as an Intranet;
+		 * not recommended for public web sites!
+		 */
+		if ( settings.isPreview && !$.fn.movabletype.user )
+		  $.fn.movabletype.fetchUser(function(u) { return $.fn.movabletype.setUser(u); });
+	      }
+	    }
+	});
 	return this;
       };
       return this.initialize();
     };
+    $.fn.movabletype.needsAuth = ( window.location.hash && window.location.hash.match( /^#_log(in|out)/ ) ) ? true : false;
+    //    if ($.fn.movabletype.needsAuth) { alert("auth action is needed in order to proceed"); }
 
     /* begin greet function */
     $.fn.greet = function(options) {
@@ -233,32 +300,53 @@
 	 * %o - logout link
 	 * %r - register link
 	 */
-      var settings = $.extend( {}, $.fn.movabletype.defaults, options);
-        var user;
+	var defaults = {
+	    /* Messages */
+	    loggedInMessage: 'Welcome, %p! %o',
+	    loggedOutMessage: '%i or %r',
+	    noPermissionMessage: 'Welcome, %p! %o',
+	    loginText: 'Sign In',
+	    logoutText: 'Sign Out',
+	    registerText: 'Sign Up',
+	    editProfileText: '%u',
+
+	    entryId: 0,
+	    isPreview: false,
+	    returnToURL: null, /* required */
+
+	    /* Events and Callbacks */
+	    onUserBanned:   function(e){ _onUserBanned(e); },
+	    onSignInClick:  function(e){ _onSignInClick(e); },
+	    onSignOutClick: function(e){ _onSignOutClick(e); },
+	    onSignUpClick:  function(e){ _onSignUpClick(e); }
+	};
 	var self;
+        var settings = $.extend( $.fn.movabletype.settings, defaults, options);
 	return this.each(function() {
-		obj = $(this);
-		self = obj;
-		_insertText(obj);
-        });
+	    obj = $(this);
+	    self = obj;
+	    //alert("initializing greet for " + obj);
+	    if ($.fn.movabletype.needsAuth) {
+	      //alert("auth is needed!!! binding onAuthEvent to el");
+	      $(this).onAuthEvent( function() { _insertText( obj ); } );
+	    } else {
+	      //alert("go ahead and get the text");
+	      _insertText( obj );
+	    }
+	});	
 
 	function _insertText(obj) {
 	  var phrase = compileGreetingText();
-	  obj.html(phrase);
-	  obj.children('a.button.login').click( function(e) { _onSignInClick(e) } );
-	  obj.children('a.button.logout').click( function(e) { _onSignOutClick(e) } );
-	  // TODO registration link
+	  obj.empty().append( jQuery("<div>" + phrase + "</div>") );
+	  obj.children().children('a.button.login').click( function(e) { settings.onSignInClick.call(e); });
+	  obj.children().children('a.button.logout').click( function(e) { settings.onSignOutClick.call(e); });
+	  obj.children().children('a.button.register').click( function(e) { settings.onSignUpClick.call(e); });
+	  //obj.append( node );
 	};
 	function _onUserBanned(e) {
 	    //alert("User is banned.");
 	};
-	function _onUserSignIn() {
-	    //no-op
-	    //alert("native: signed in");
-	};
 	function _signIn() {
-	    var doc_url = document.URL;
-	    doc_url = doc_url.replace(/#.+/, '');
 	    var url = settings.mtSignInURL;
 	    if (settings.isPreview) {
 		if ( settings.entryID ) {
@@ -267,16 +355,18 @@
 		    url += '&return_url=' + settings.returnToURL;
 		}
 	    } else {
-		url += '&return_url=' + encodeURIComponent(doc_url);
+	      var doc_url = document.URL;
+	      doc_url = doc_url.replace(/#.+/, '');
+	      url += '&return_url=' + encodeURIComponent(doc_url);
 	    }
-	    mtClearUser();
-	    settings.onUserSignIn();
+	    $.fn.movabletype.clearUser();
 	    location.href = url;
 	};
-	function _signOut() {
+	function _onSignOutClick(e) {
 	    $.fn.movabletype.clearUser();
 	    var doc_url = document.URL;
 	    doc_url = doc_url.replace(/#.+/, '');
+	    // TODO - error check: signouturl not set?
 	    var url = settings.mtSignOutURL;
 	    if (is_preview) {
 		if ( settings.entryID ) {
@@ -288,9 +378,24 @@
 		url += '&return_url=' + encodeURIComponent(doc_url);
 	    }
 	    location.href = url;
+	    return false;
 	};
-	function _onSignOutClick(e) {
-	    _signOut();
+	function _onSignUpClick(e) {
+	    $.fn.movabletype.clearUser();
+	    var doc_url = document.URL;
+	    doc_url = doc_url.replace(/#.+/, '');
+	    // TODO - error check: signupurl not set?
+	    var url = settings.mtSignUpURL;
+	    if (is_preview) {
+		if ( settings.entryID ) {
+		    url += '&entry_id=' + settings.entryID;
+		} else {
+		    url += '&return_url=' + settings.returnToURL;
+		}
+	    } else {
+		url += '&return_url=' + encodeURIComponent(doc_url);
+	    }
+	    location.href = url;
 	    return false;
 	};
 	function _onSignInClick(e) {
@@ -298,25 +403,25 @@
 	  self.html(phrase);
 	  $.fn.movabletype.clearUser(); // clear any 'anonymous' user cookie to allow sign in
 	  $.fn.movabletype.fetchUser(function(u) {
+	      //var u = $.fn.movabletype.getUser();
+	      //alert("user object is: " + u);
 	      if (u && u.is_authenticated) {
-		//alert("setting user");
+		//alert("setting user from onSignInClick callback...");
 		$.fn.movabletype.setUser(u);
-		$.fn.onUserAuthed.fire.call();
 		_insertText(self);
 	      } else {
 		// user really isn't logged in; so let's do this!
-		//alert("call signin");
 		_signIn();
 	      }
-	    });
+	  });
 	  return false;
         };
 	function compileGreetingText() {
 	    var phrase;
-	    var u = $.fn.movabletype.user;
+	    var u = $.fn.movabletype.getUser();
 	    var profile_link;
 	    if ( u && u.is_authenticated ) {
-		//alert("compiling text: user is authed");
+	        //alert("compiling text: user is authed");
 		if ( u.is_banned ) {
 		    settings.onUserBanned();
 		    phrase = settings.noPermissionText;
@@ -324,8 +429,8 @@
 		} else {
 		    if ( u.is_author ) {
 			profile_link = '<a href="'+settings.mtScriptURL+'?__mode=edit_profile&blog_id=3';
-			if (settings.mtEntryId)
-			    profile_link += '&entry_id=' + settings.mtEntryId;
+			if (settings.entryId)
+			    profile_link += '&entry_id=' + settings.entryId;
 			profile_link += '">' + settings.editProfileText + '</a>';
 		    } else {
 			// registered user, but not a user with posting rights
@@ -337,7 +442,8 @@
 		    phrase = settings.loggedInMessage;
 		}
 	    } else {
-	      //alert('user is logged out');
+		// TODO - this obviously does that same thing. 
+	        //alert("compiling text: user is anonymous");
 		if (settings.registrationRequired) {
 		    phrase = settings.loggedOutMessage;
 		} else {
@@ -347,6 +453,7 @@
 	    var login_link    = '<a class="login button" href="javascript:void(0)">' + settings.loginText + '</a>';
 	    var logout_link   = '<a class="logout button" href="javascript:void(0)">' + settings.logoutText + '</a>';
 	    var register_link = '<a class="register button" href="javascript:void(0)">' + settings.registerText + '</a>';
+
 	    phrase = phrase.replace(/\%p/,profile_link);
 	    phrase = phrase.replace(/\%i/,login_link);
 	    phrase = phrase.replace(/\%o/,logout_link);
@@ -354,20 +461,10 @@
 	    if ( u && u.is_authenticated ) {
 		phrase = phrase.replace(/\%u/,u.name);
 	    }
-	    //alert('phrase: ' + phrase);
 	    return phrase;
 	};
     };
     $.fn.movabletype.defaults = {
-        /* Messages */
-        loggedInMessage: 'Welcome, %p! %o',
-	loggedOutMessage: '%i or %r',
-	noPermissionMessage: 'Welcome, %p! %o',
-	loginText: 'Sign In',
-	logoutText: 'Sign Out',
-	registerText: 'Sign Up',
-	editProfileText: '%u',
-
         /* Scripts and Cookies */
 	mtScriptURL: '', /* required */
 	mtStaticURL: '', /* required */
@@ -376,18 +473,13 @@
 	mtCookiePath: "/",
 	mtCookieTimeout: 14400,
 
-	blogID: '', /* required */
-	mtEntryId: 0,
-	isPreview: false,
-	registrationRequired: false,
-	returnToURL: null, /* required */
+	mtSignInURL: null, /* required */
 	mtSignOutURL: null, /* required */
+	mtSignUpURL: null, /* required */
 
-        /* Events and Callbacks */
-	onUserBanned: function(){},   // $.fn.movabletype.settings.onUserBanned.call(this); },
-	onSignInClick: function(){},  // settings.onSignInClick(this); },
-	onSignOutClick: function(){}, // $.fn.movabletype.settings.onSignOutClick.call(this); },
-	onUserSignIn: function(){}   // $.fn.movabletype.settings.onUserSignIn.call(this); }
+	blogID: '', /* required */
+	registrationRequired: false
+
 	/*
 	onUserAuthed: function(){},   // $.fn.movabletype.settings.onUserSignIn.call(this); }
 	onUserUnauthed: function(){}  // $.fn.movabletype.settings.onUserSignIn.call(this); }
