@@ -132,6 +132,7 @@
 	//	if ( cb.call() && $.fn.movabletype.getUser() ) {
 	if ( $.fn.movabletype.getUser() && $.fn.movabletype.getUser().is_authenticated ) {
 	  // user is logged into current domain...
+	  //alert('User is logged into the current domain...' + dump($.fn.movabletype.getUser()));
 	  var url = document.URL;
 	  url = url.replace(/#.+$/, '');
 	  url += '#comments-open';
@@ -143,10 +144,11 @@
 	  // we aren't using AJAX for this, since we may have to request
 	  // from a different domain. JSONP to the rescue.
 	  mtFetchedUser = true;
-	  var url = settings.mtScriptURL + '?__mode=session_js&blog_id=' + settings.blogID + '&jsonp=?';
+	  var url = settings.mtCGIPath + settings.mtCommentScriptURL + '?__mode=session_js&blog_id=' + settings.blogID + '&jsonp=?';
           //alert("Fetching user from: " + url);
 	  // this is asynchronous, so it will return prior to the user being saved
 	  $.getJSON(url,function(data) { 
+	      //alert("Callback returned with this data: " + dump(data)); 
 	      cb(data) 
           });
 	}
@@ -443,7 +445,11 @@
 		    //'You do not have permission to comment on this blog. (<a href="javascript:void(0);" onclick="return mtSignOutOnClick();">sign out</a>)';
 		} else {
 		    if ( u.is_author ) {
-			profile_link = '<a href="'+settings.mtScriptURL+'?__mode=edit_profile&blog_id=' + settings.blogID;
+		      if (settings.mode == "mtpro") {
+			profile_link = '<a href="'+settings.mtCGIPath + settings.mtCommunityScriptURL+'?__mode=edit&blog_id=' + settings.blogID;
+		      } else {
+			profile_link = '<a href="'+settings.mtCGIPath + settings.mtCommentScriptURL+'?__mode=edit_profile&blog_id=' + settings.blogID;
+		      }
 			if (settings.entryId)
 			    profile_link += '&entry_id=' + settings.entryId;
 			profile_link += '">' + settings.editProfileText + '</a>';
@@ -481,7 +487,10 @@
     };
     $.fn.movabletype.defaults = {
         /* Scripts and Cookies */
-	mtScriptURL: '', /* required */
+	mtCGIPath: '', /* required */
+        mode: 'mtos',
+	mtCommentScriptURL: 'mt-comments.cgi',
+	mtCommunityScriptURL: 'mt-cp.cgi',
 	mtStaticURL: '', /* required */
 	mtCookieName: '', /* required */
 	mtCookieDomain: "", /* required */
