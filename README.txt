@@ -165,7 +165,7 @@ greet function:
 The following are the tokens currently supported:
 
 * %p - profile link, e.g. edit profile
-* %u - user name
+* %u - user's display name
 * %i - login link
 * %o - logout link
 * %r - register link
