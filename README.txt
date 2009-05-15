@@ -103,9 +103,9 @@ properly detect the current users sessions and logged in
 status:
 
     $.fn.movabletype({
-      blogID:         <mt:CNRootBlogID>,
+      blogID:         <$mt:BlogID$>,
       mode:           'mtpro',
-      mtCGIPath:      '<$MTCGIPath$>',
+      mtCGIPath:      '<$mt:CGIPath$>',
       mtCommentScriptURL:   '<$mt:CommentScript$>',
       mtCommunityScriptURL: '<$mt:CommunityScript$>',
       mtStaticURL:    '<$mt:StaticWebPath$>',
@@ -171,3 +171,9 @@ conditions occur or are met. They are:
 
 * onAuthEvent - fired whenever a user is determined to be logged in or
   logged out.
+
+# License and Copyright
+
+Copyright 2009, Byrne Reese. All rights reserved.
+
+This plugin is licensed under the same terms as jQuery itself. 
