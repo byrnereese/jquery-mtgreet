@@ -1,135 +1,156 @@
 # Overview
 
-This plugin provides a jQuery interface for published blogs
-on the Movable Type Publishing Platform. 
+This plugin provides a jQuery interface for published blogs on the 
+Movable Type Publishing Platform. The interface is responsible for 
+rendering sign in/out/up links on a page based upon the state of a 
+user's session. It exposes event handlers for authentication 
+events so that developers can bind to the DOM handers that respond 
+to a user logging in or out.
 
-This library is meant to service partly as a replacement for 
-the bulk of the standard javascript file that is typically
-found in every Movable Type template set or theme.
+This library is meant to service partly as a replacement for the 
+bulk of the standard javascript file that is typically found in 
+every Movable Type template set or theme.
 
 Currently this library is limited to:
+
 * displaying a greeting to logged in or logged out users
 * rendering login/logout/edit profile links
 
-# Configuration Options
+# Getting Started
 
-* mtCGIPath - The URL to the CGI directory. 
-  e.g. "http://foo.com/cgi-bin/mt/")
+Before you begin, make sure you have a copy of jQuery 1.3 or 
+greater installed on your system/website. You will need to include 
+this in your web page or Movable Type templates:
 
-* mode - Controls whether links for signing in, registering
+   <script type="text/javascript" src="jquery-1.3.1.js"></script>
+
+## Install Javascript Index Template
+
+Found in this package is a file containing template code that is
+meant to be published as an index template for any blog that 
+utilizes this jQuery library. You can find this template code in 
+the file called: `javascript_mt.mtml`.
+
+1. Navigate to your blog's Design > Templates area.
+
+2. Click "Create index template."
+
+3. Cut and paste the contents of `javascript_mt.mtml` into the 
+   newly created template.
+
+4. Set the output file name to `mt.js`.
+
+5. Click "Save and Publish."
+
+## Add Your Script Tags
+
+Once your `mt.js` file has been published you have all that you need
+to get started. The next step is to add the javascript libraries to
+your web site. Add this code to the header of your web site.
+
+    <script type="text/javascript" src="mt.js"></script>
+    <script type="text/javascript" src="jquery.mtauth.js"></script>
+    <script type="text/javascript" src="jquery.mtgreeting.js"></script>
+
+Note: you may need to adjust the paths to each of the scripts above
+depending upon where they are located on your web server.
+
+## Edit Your Web Page
+
+Now let's look at some actual HTML and javascript that you can use on 
+your web site and blog:
+
+    <html>
+      <head>
+        <script type="text/javascript" src="mt.js"></script>
+        <script type="text/javascript" src="jquery.js"></script>
+        <script type="text/javascript" src="jquery.mtauth.js"></script>
+        <script type="text/javascript" src="jquery.mtgreeting.js"></script>
+        <script type="text/javascript">
+        $(document).ready(function() {
+          $('#greeting').greet();
+        });
+        </script>
+      </head>
+      <body>
+        <div id="greeting"></div>
+      </body>
+    </html>
+
+# Usage
+
+## Configuration Options
+
+* `mode` - Controls whether links for signing in, registering
   will be constructed using the open source version, or will
   link to the Movable Type Pro equivalents. Possible values
   are: "mtos" and "mtpro". (default: mtos)
 
-* mtCommunityScriptURL - The name of the community script. This
-  is only valid for Movable Type Pro users. (default: mt-cp.cgi)
-
-* mtCommentScriptURL - The name of the comment script.
-  (default: mt-comment.cgi)
-
-* mtStaticURL - The URL to the Movable Type static web path.
-
-* mtCookieName - The name of the cookie storing session data.
-
-* mtCookieDomain - The domain of the cookie storing session 
-  data.
-
-* mtCookiePath - The path of the cookie storing session data.
-
-* mtCookieTimeout - The length of time the cookie being set
-  to store session data will last. Time is expressed in
-  seconds. (default: 14400)
-
-* mtSignInURL - The sign in URL for this blog.
-
-* mtSignOutURL - The logout URL for this blog.
-
-* mtSignUpURL - The register URL for this blog.
-
-* blogID - The ID of the blog currently in context.
-
-* registrationRequired - Whether registration is required for 
-  the current blog or not. (default: false)
-
-* loggedInMessage - The message to display in the target 
+* `loggedInMessage` - The message to display in the target 
   element when the user is logged in. (default: 'Welcome, %p! %o')
 
-* loggedOutMessage - The message to display in the target
+* `loggedOutMessage` - The message to display in the target
   element when the user is NOT logged in. (default: '%i or %r')
 
-* noPermissionMessage - The message to display in the target 
+* `noPermissionMessage` - The message to display in the target 
   element when the user does NOT have permission to leave a
   comment. (default: 'Welcome, %p! %o')
 
-* loginText - The text to use in the login link. 
+* `loginText` - The text to use in the login link. 
   (default: 'Sign In')
 
-* logoutText - The text to use in the logout link. 
+* `logoutText` - The text to use in the logout link. 
   (default: 'Sign Out')
 
-* registerText - The text to use in the register link.
+* `registerText` - The text to use in the register link.
   (default: 'Sign Up')
 
-* editProfileText - The text to use in the edit profile link.
+* `editProfileText` - The text to use in the edit profile link.
   (default: '%u')
 
-* entryId - The ID of the current entry in context. This is used
-  when constructing return to URLs for commenting forms.
-  (default: 0)
-
-* isPreview - A boolean value indicating whether a user is
+* `isPreview` - A boolean value indicating whether a user is
   currently previewing an entry or comment. (default: false)
 
-* returnToURL - An optional return to URL that will override 
+* `returnToURL` - An optional return to URL that will override 
   typical defaults. This controls the page a user will return
   after logging in, out or registering.
 
-# Usage
+The following settings are set via the mt.js file (inside the
+index template you published previously).
 
-First you will need to add this library to the HTML <head>
-of your website like so:
+* `mt.entry.id` - The ID of the current entry in context. This is used
+  when constructing return to URLs for commenting forms.
+  (default: 0)
 
-    <script type="text/javascript" src="jquery.mtgreeting.js"></script>
+* `mt.blog.community.script` - The name of the community script. This
+  is only valid for Movable Type Pro users. (default: mt-cp.cgi)
 
-In the HTML of your page you would need an element to bind to:
+* `mt.blog.comments.script` - The name of the comment script.
+  (default: mt-comment.cgi)
 
-    <div id="greeting"></div>
+* `mt.links.signIn` - The sign in URL for this blog.
 
-Then in another script block you can invoke the 'greet' 
-function on any DOM element. This following code sample shows
-the Movable Type template tags you would also need to use
-in conjunction with this library so that the plugin can 
-properly detect the current users sessions and logged in
-status:
+* `mt.links.signOut` - The logout URL for this blog.
 
-    $.fn.movabletype({
-      blogID:         <$mt:BlogID$>,
-      mode:           'mtpro',
-      mtCGIPath:      '<$mt:CGIPath$>',
-      mtCommentScriptURL:   '<$mt:CommentScript$>',
-      mtCommunityScriptURL: '<$mt:CommunityScript$>',
-      mtStaticURL:    '<$mt:StaticWebPath$>',
-      mtCookieName:   '<$mt:UserSessionCookieName$>',
-      mtCookieDomain: '<$mt:UserSessionCookieDomain$>',
-      mtSignOutURL:   '<$mt:SignOutLink$>',
-      mtSignInURL:    '<$mt:SignInLink$>',
-      mtSignUpURL:    '<$mt:CGIPath$><$mt:CommunityScript$>?__mode=register&blog_id=<mt:BlogID>',
-      registrationRequired: <mt:IfRegistrationRequired>true<mt:else>false</mt:IfRegistrationRequired>
-    });
+* `mt.links.signUp` - The register URL for this blog.
 
-    $(document).ready(function() {
-      $('#greeting').greet();
-    });
+* `mt.blog.id` - The ID of the blog currently in context.
 
-If the current user is logged out, then the greeting element
-will say:
+* `mt.blog.registration.required` - Whether registration is required for 
+  the current blog or not. (default: false)
 
-   Sign In or Sign Up
+* `mt.blog.staticWebPath` - The URL to the Movable Type static web path.
 
-If the current user is logged out, then the greeting element
-will say: 
+* `mt.cookie.name` - The name of the cookie storing session data.
 
-   Welcome, USERNAME! Sign Out
+* `mt.cookie.domain` - The domain of the cookie storing session 
+  data.
+
+* `mt.cookie.path` - The path of the cookie storing session data.
+
+* `mt.cookie.timeout` - The length of time the cookie being set
+  to store session data will last. Time is expressed in
+  seconds. (default: 14400)
 
 ## Customizing Messaging
 
@@ -159,6 +180,15 @@ options can be provided:
 * logoutText: 'Sign Out'
 * registerText: 'Sign Up'
 * editProfileText: '%u'
+
+**Example**
+
+    $('#greeting').greet({
+      editProfileText: 'edit profile',
+      logoutText: 'logout',
+      loggedInMessage: 'Hello, %u. (%p | %o)',
+      loggedOutMessage: '%i or %r'
+    });
 
 ## Events and Callbacks
 

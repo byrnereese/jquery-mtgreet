@@ -1,0 +1,61 @@
+//
+// This file defines blog variables and phrases which are used by javascript functions.
+//
+var mt;
+mt = {
+    cookie: {
+        name: "<$mt:UserSessionCookieName$>",
+        domain: "<$mt:UserSessionCookieDomain$>",
+        path: "<$mt:UserSessionCookiePath$>",
+        timeout: <$mt:UserSessionCookieTimeout$>
+    },
+    blog: {
+        id: <$mt:BlogID _default="0"$>,
+        url: '<$mt:BlogURL encode_url="1"$>',
+        staticWebPath: '<$mt:StaticWebPath$>',
+        adminScript: '<$mt:AdminScript$>',
+        signInLink: '<$mt:SignInLink$>',
+        signOutLink: '<$mt:SignOutLink$>',
+        comments: {
+            script: '<$mt:CGIPath$><$mt:CommentScript$>',
+            armor: '<$mt:BlogSitePath encode_sha1="1"$>',
+            accepted: <mt:IfCommentsAccepted>1<mt:Else>0</mt:IfCommentsAccepted>,
+            captchaFields: '<$mt:CaptchaFields$>'
+        },
+        community: {
+            script: '<$mt:CGIPath$><$mt:CommunityScript$>',
+            ifAnonymousRecommendAllowed: <mt:IfAnonymousRecommendAllowed>1<mt:Else>0</mt:IfAnonymousRecommendAllowed>
+        },
+        pings: {
+            accepted: <mt:IfPingsAccepted>1<mt:Else>0</mt:IfPingsAccepted>
+        },
+        registration: {
+            required: <mt:IfRegistrationRequired>1<mt:Else>0</mt:IfRegistrationRequired>,
+            allowed: <mt:IfRegistrationAllowed>1<mt:Else>0</mt:IfRegistrationAllowed>
+        }
+    }
+};
+
+mt.blog.phrase = {
+    fileRequired: 'Please select a file to post.',
+    invalidFileType: 'You selected an unsupported file type.',
+    relativeDate: {
+        momentsAgo: 'moments ago',
+        minutesAgo: '1 minute ago',
+        minutesAgoPlural: '2 minutes ago',
+        hoursAgo: '1 hour ago',
+        hoursAgoPlural: '2 hours ago',
+        daysAgo: '1 day ago',
+        daysAgoPlural: '2 days ago'
+    },
+    edit: 'Edit',
+    signingIn: 'Signing in...',
+    commenter: {
+        auth: '\<a href=\"javas\cript:void(0)\" onclick=\"return mtSignInOnClick(\'comment-greeting\')\"\>Sign in\<\/a\> to comment.',
+        authAnonyous: '\<a href=\"javas\cript:void(0)\" onclick=\"return mtSignInOnClick(\'comment-greeting\')\"\>Sign in\<\/a\> to comment, or comment anonymously.',
+        authBanned: 'You do not have permission to comment on this blog. (\<a href=\"javas\cript:void(0);\" onclick=\"return mtSignOutOnClick();\"\>sign out\<\/a\>)',
+        authSuccess: 'Thanks for signing in, __NAME__. (\<a href=\"javas\cript:void(0)\" onclick=\"return mtSignOutOnClick();\"\>sign out\<\/a\>)',
+        sessionExpired: 'Your session has expired. Please sign in again to comment.',
+        replyingTo: 'Replying to \<a href=\"#comment-__PARENT__\" onclick=\"location.href=this.href; return false\"\>comment from __AUTHOR__\<\/a\>'
+    }
+};
