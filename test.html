@@ -22,10 +22,10 @@ $(document).ready( function() {
   $('#action3').click( function(){ $(this).parent().greet() });
   $('#test5').greet({ mode:'mtpro' });
   $('.test6').greet();
-  $('#test7').onUserAuthed( function(){ $(this).show(); });
-  $('#test7').onUserUnauthed( function(){ $(this).hide(); });
-  $('#test8').onUserAuthed( function(){ $(this).hide(); });
-  $('#test8').onUserUnauthed( function(){ $(this).show(); });
+  $('#test7').onauthchange( function(e,u){ if (u.is_authenticated) $(this).show(); });
+  $('#test7').onauthchange( function(e,u){ if (!u.is_authenticated) $(this).hide(); });
+  $('#test8').onauthchange( function(e,u){ if (u.is_authenticated) $(this).hide(); });
+  $('#test8').onauthchange( function(e,u){ if (u.is_authenticated) $(this).show(); });
   $('#test9').greet({ returnToURL: 'http://www.google.com/' });
 });
     </script>
