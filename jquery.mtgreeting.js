@@ -22,21 +22,22 @@
 	return this.each(function() {
 	    obj = $(this);
 	    self = obj;
-	    if ($.fn.movabletype.needsAuth) {
-	      $(this).onAuthEvent( function() { _insertText( $(this) ); } );
+	    if (jQuery.needsAuth) {
+	      $(this).onauthchange( function(e, u) { 
+		  _insertText( $(this) ); 
+              });
 	    } else {
 	      _insertText( $(this) );
+	      $(this).onauthchange( function() { _insertText( obj ); return false; });
 	    }
 	});	
 
 	function _insertText(obj) {
-	  //alert("Inserting text...");
 	  var phrase = compileGreetingText();
 	  obj.empty().append( jQuery("<div>" + phrase + "</div>") );
 	  obj.children().children('a.button.login').click(    function() { settings.onSignInClick($(this)); });
 	  obj.children().children('a.button.logout').click(   function() { settings.onSignOutClick.call($(this)); });
 	  obj.children().children('a.button.register').click( function() { settings.onSignUpClick.call($(this)); });
-	  obj.onAuthEvent( function() { _insertText( obj ); });
 	};
 	function _signIn() {
 	    var url = mt.links.signIn;
@@ -102,7 +103,6 @@
 	  $.fn.movabletype.fetchUser(function(u) {
 	      if (u && u.is_authenticated) {
 		$.fn.movabletype.setUser(u);
-		//alert("Inserting text...");
 		_insertText( $(target) );
 	      } else {
 		// user really isn't logged in; so let's do this!

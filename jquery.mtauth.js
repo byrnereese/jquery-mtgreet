@@ -1,61 +1,21 @@
+jQuery.extend({ authchangeList: [], authHappened: false, needsAuth: false });
 (function($){
-    $.fn.onAuthEvent = function( fn ) {
+    $.fn.onauthchange = function( fn ) {
       return this.each(function() {
-          $(this).bind("onAuthEvent", fn);
-	  $.fn.onAuthEvent.listeners.push( $(this) );
-	  if ($.fn.onAuthEvent.happened) {
-	    $(this).trigger("onUserUnauthed");
+	  jQuery.authchangeList.push( this );
+	  $(this).bind('onauthchange', fn);
+          if (jQuery.authHappened) {
+            $(this).trigger('onauthchange',$.fn.movabletype.user);
 	  }
       });
     };
-    $.fn.onAuthEvent.listeners = [];
-    $.fn.onAuthEvent.fire = function() {
-      $.fn.onAuthEvent.happened = true;
-      for (var i in $.fn.onAuthEvent.listeners) {
-	var lsnr = $.fn.onAuthEvent.listeners[i];
-	lsnr.trigger('onAuthEvent');
-      }
-      $.fn.movabletype.needsAuth = false;
-    };
-
-    $.fn.onUserUnauthed = function( fn ) {
-      return this.each(function() {
-          $(this).bind("onUserUnauthed", fn);
-	  $.fn.onUserUnauthed.listeners.push( $(this) );
-	  if ($.fn.movabletype.user && !$.fn.movabletype.user.is_authenticated) {
-	    $(this).trigger("onUserUnauthed");
-	  }
+    $.fn.onauthchange.fire = function() {
+      jQuery.authHappened = true;
+      jQuery.needsAuth = false;
+      jQuery.each( jQuery.authchangeList, function() { 
+	  $(this).trigger('onauthchange',$.fn.movabletype.user); 
       });
     };
-    $.fn.onUserUnauthed.listeners = [];
-    $.fn.onUserUnauthed.fire = function() {
-      $.fn.onAuthEvent.happened = true;
-      for (var i in $.fn.onUserUnauthed.listeners) {
-	var lsnr = $.fn.onUserUnauthed.listeners[i];
-	lsnr.trigger('onUserUnauthed');
-      }
-    };
-
-    $.fn.onUserAuthed = function( fn ) {
-      return this.each(function() {
-          $(this).bind("onUserAuthed", fn);
-	  $.fn.onUserAuthed.listeners.push( $(this) );
-	  if ($.fn.movabletype.user && $.fn.movabletype.user.is_authenticated) {
-	    //alert("firing event for listener (2)");
-	    $(this).trigger("onUserAuthed",this);
-	  }
-      });
-    };
-    $.fn.onUserAuthed.listeners = [];
-    $.fn.onUserAuthed.fire = function() {
-      $.fn.onAuthEvent.happened = true;
-      for (var i in $.fn.onUserAuthed.listeners) {
-	var lsnr = $.fn.onUserAuthed.listeners[i];
-	//	alert("firing event for listener");
-	lsnr.trigger('onUserAuthed',$(lsnr));
-      }
-    };
-
     $.fn.movabletype = function() {
       var calledOnUserSignIn = false;
       var _escapeJS   = function(s) { return s.replace(/\'/g, "&apos;"); }
@@ -70,7 +30,6 @@
 	if (cookieEndIndex == -1)
 	  cookieEndIndex = c.length;
 	var cookiestr = unescape(c.substring(cookieStartIndex + prefix.length, cookieEndIndex));
-	//alert('cookie: ' + cookiestr);
 	return cookiestr;
       };
       var _unbakeCookie = function(s) {
@@ -116,7 +75,6 @@
 	return $.fn.movabletype.user;
       };
       $.fn.movabletype.fetchUser = function(cb) {
-	//alert("Called fetchUser...");
 	if (!cb) { 
           cb = function(u) { 
             return $.fn.movabletype.setUser(u); 
@@ -124,23 +82,18 @@
         }; 
 	if ( $.fn.movabletype.getUser() && $.fn.movabletype.getUser().is_authenticated ) {
 	  // user is logged into current domain...
-	  //alert("user is logged in");
 	  var url = document.URL;
 	  url = url.replace(/#.+$/, '');
 	  url += '#comments-open';
 	  location.href = url;
-	  // TODO fire - on authevent
 	  cb.call($.fn.movabletype.getUser());
 	} else {
 	  // we aren't using AJAX for this, since we may have to request
 	  // from a different domain. JSONP to the rescue.
-	  //alert("user is NOT logged in");
 	  mtFetchedUser = true;
 	  var url = mt.blog.comments.script + '?__mode=session_js&blog_id=' + mt.blog.id + '&jsonp=?';
 	  // this is asynchronous, so it will return prior to the user being saved
-	  //alert(url);
 	  $.getJSON(url,function(data) { 
-	      //alert("User info retrieved.");
 	      cb(data) 
           });
 	}
@@ -149,8 +102,7 @@
 	if (u) {
 	  // persist this
 	  $.fn.movabletype.user = u;
-	  $.fn.onUserAuthed.fire.call();
-	  $.fn.onAuthEvent.fire.call();
+	  $.fn.onauthchange.fire();
 	  _saveUser();
 	}
 	return $.fn.movabletype.user;
@@ -236,19 +188,19 @@
       };
       $.fn.movabletype.clearUser = function() {
 	this.user = null;
+	jQuery.authHappened = false;
 	_deleteCookie();
       };
       this.initialize = function() {
 	this.user = $.fn.movabletype.getUser();
 	$(document).ready( function() {
-	    //alert('initing');
-	    if (mt.blog.id && mt.blog.registration.required) {
+	    /*if (mt.blog.id && mt.blog.registration.required) {*/
 	      /***
 	       * If request contains a '#_login' or '#_logout' hash, use this to
 	       * also delete the blog-side user cookie, since we're coming back from
 	       * a login, logout or edit profile operation.
 	       */
-	      if ($.fn.movabletype.needsAuth) {
+	      if (jQuery.needsAuth) {
 		// clear any logged in state
 		$.fn.movabletype.clearUser();
 		window.location.hash.match( /^#_log(in|out)/ );
@@ -260,26 +212,15 @@
 		      url += '#loggedin';
 		      location.href = url;
 		    });
-		  // TODO - should I fire an auth event here?
 		} else if (RegExp.$1 == "out") {
-		  $.fn.onUserUnauthed.fire.call();
-		  $.fn.onAuthEvent.fire.call();
+		  $.fn.onauthchange.fire();
 		  var url = document.URL;
 		  url = url.replace(/#.+$/, '');
 		  url += '#loggedout';
 		  location.href = url;
 		} 
 	      } else {
-
-		// in all other circumstances please fire the requisite event
-		if ($.fn.movabletype.user.is_authenticated) {
-		  $.fn.onUserAuthed.fire.call();
-		  $.fn.onAuthEvent.fire.call();
-		} else {
-		  $.fn.onUserUnauthed.fire.call();
-		  $.fn.onAuthEvent.fire.call();
-		}
-		  
+                $.fn.onauthchange.fire();
 		/***
 		 * Uncondition this call to fetch the current user state (if available)
 		 * from MT upon page load if no user cookie is already present.
@@ -292,12 +233,12 @@
 		}
 		*/
 	      }
-	    }
+	      /*}*/
 	});
 	return this;
       };
       return this.initialize();
     };
-    $.fn.movabletype.needsAuth = ( window.location.hash && window.location.hash.match( /^#_log(in|out)/ ) ) ? true : false;
+    jQuery.needsAuth = ( window.location.hash && window.location.hash.match( /^#_log(in|out)/ ) ) ? true : false;
 })(jQuery);
 $.fn.movabletype();

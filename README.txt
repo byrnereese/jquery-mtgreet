@@ -195,12 +195,34 @@ options can be provided:
 There are a number of events that this plugin will fire when specific 
 conditions occur or are met. They are:
 
-* onAuthedUser - fired when a user is determined to be authenticated
+* onauthchange - fired when a user is determined to be logged in or out.
+  Receives as input a reference to the MT User object containing the 
+  user's info.
 
-* onUnauthedUser - fired when a user is determined to be logged out
+User object contains these elements:
 
-* onAuthEvent - fired whenever a user is determined to be logged in or
-  logged out.
+* `is_anonymous` - true if the user is NOT logged in
+* `is_authenticated` - true if the user is logged in
+* `can_post` - true if the user has permission to post entries on the
+  current blog.
+* `is_author` - true if the user has the role of "Author" on the 
+  current blog.
+* `is_banned` - true if the user has been banned from making comments
+  or entries on the current blog.
+* `is_trusted` - true if the user has been granted the status of 
+  "trusted" on the current blog.
+* `userpic` - the URL to the user's userpic.
+* `name` - the user's display name.
+
+**Example**
+
+    $('#userpic').onauthchange( function( e, u ) {
+      if (u.is_authenticted) {
+        $(this).html('<img src="'+u.userpic+'" />');
+      } else {
+        $(this).html('Not logged in');
+      }
+    });
 
 # License and Copyright
 
