@@ -121,16 +121,18 @@
 		    //'You do not have permission to comment on this blog. (<a href="javascript:void(0);" onclick="return mtSignOutOnClick();">sign out</a>)';
 		} else {
 		    if ( u.is_author ) {
-		      if (settings.mode == "mtpro") {
+		      if (mt.links.editProfile) {
+			profile_link = '<a href="'+mt.links.editProfile;
+		      } else if (settings.mode == "mtpro") {
 			profile_link = '<a href="'+mt.blog.community.script+'?__mode=edit&blog_id=' + mt.blog.id;
 		      } else {
 			profile_link = '<a href="'+mt.blog.comments.script+'?__mode=edit_profile&blog_id=' + mt.blog.id;
 		      }
-			if (mt.entry && mt.entry.id)
-			    profile_link += '&entry_id=' + mt.entry.id;
-			if (settings.returnToURL)
-			  profile_link += '&return_to=' + encodeURI(settings.returnToURL);
-			profile_link += '">' + settings.editProfileText + '</a>';
+		      if (mt.entry && mt.entry.id)
+			profile_link += '&entry_id=' + mt.entry.id;
+		      if (settings.returnToURL)
+			profile_link += '&return_to=' + encodeURI(settings.returnToURL);
+		      profile_link += '">' + settings.editProfileText + '</a>';
 		    } else {
 			// registered user, but not a user with posting rights
 			if (u.url)

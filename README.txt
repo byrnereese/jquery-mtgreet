@@ -134,6 +134,8 @@ index template you published previously).
 
 * `mt.links.signUp` - The register URL for this blog.
 
+* `mt.links.editProfile` - The URL for editing the current user's profile.
+
 * `mt.blog.id` - The ID of the blog currently in context.
 
 * `mt.blog.registration.required` - Whether registration is required for 
