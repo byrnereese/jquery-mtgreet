@@ -13,9 +13,9 @@
             isPreview: false,
 	    returnToURL: null, 
 	    /* Events and Callbacks */
-	    onSignInClick:  function(e){ _onSignInClick( $(e) ); },
-	    onSignOutClick: function(e){ _onSignOutClick( $(e) ); },
-	    onSignUpClick:  function(e){ _onSignUpClick( $(e) ); }
+	    onSignInClick:  function(e){ return _onSignInClick( $(e) ); },
+	    onSignOutClick: function(e){ return _onSignOutClick( $(e) ); },
+	    onSignUpClick:  function(e){ return _onSignUpClick( $(e) ); }
 	};
 	var self;
         var settings = $.extend( {}, defaults, options);
@@ -35,9 +35,9 @@
 	function _insertText(obj) {
 	  var phrase = compileGreetingText();
 	  obj.empty().append( jQuery("<div>" + phrase + "</div>") );
-	  obj.children().children('a.button.login').click(    function() { settings.onSignInClick($(this)); });
-	  obj.children().children('a.button.logout').click(   function() { settings.onSignOutClick.call($(this)); });
-	  obj.children().children('a.button.register').click( function() { settings.onSignUpClick.call($(this)); });
+	  obj.children().children('a.button.login').click(    function() { return settings.onSignInClick($(this)); });
+	  obj.children().children('a.button.logout').click(   function() { return settings.onSignOutClick.call($(this)); });
+	  obj.children().children('a.button.register').click( function() { return settings.onSignUpClick.call($(this)); });
 	};
 	function _signIn() {
 	    var url = mt.links.signIn;
@@ -61,17 +61,18 @@
 	    doc_url = doc_url.replace(/#.+/, '');
 	    // TODO - error check: signouturl not set?
 	    var url = mt.links.signOut;
+	    if (url.match(/\?/)) { url += '&'; } else { url += '?'; }
 	    if (settings.isPreview) {
 	      if ( mt.entry && mt.entry.id ) {
-		url += '&entry_id=' + mt.entry.id;
+		url += 'entry_id=' + mt.entry.id;
 	      } else {
-		url += '&return_url=' + settings.returnToURL;
+		url += 'return_url=' + settings.returnToURL;
 	      }
 	    } else {
 	      if (settings.returnToURL) { 
-		url += '&return_url=' + settings.returnToURL;
+		url += 'return_url=' + settings.returnToURL;
 	      } else {
-		url += '&return_url=' + encodeURIComponent(doc_url);
+		url += 'return_url=' + encodeURIComponent(doc_url);
 	      }
 	    }
 	    location.href = url;
@@ -83,14 +84,15 @@
 	    doc_url = doc_url.replace(/#.+/, '');
 	    // TODO - error check: signupurl not set?
 	    var url = mt.links.signUp;
+	    if (url.match(/\?/)) { url += '&'; } else { url += '?'; }
 	    if (settings.isPreview) {
 		if ( mt.entry && mt.entry.id ) {
-		  url += '&entry_id=' + mt.entry.id;
+		  url += 'entry_id=' + mt.entry.id;
 		} else {
-		  url += '&return_url=' + settings.returnToURL;
+		  url += 'return_url=' + settings.returnToURL;
 		}
 	    } else {
-		url += '&return_url=' + encodeURIComponent(doc_url);
+		url += 'return_url=' + encodeURIComponent(doc_url);
 	    }
 	    location.href = url;
 	    return false;
