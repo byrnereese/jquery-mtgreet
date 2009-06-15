@@ -9,6 +9,7 @@
 	    logoutText:          'Sign Out',
 	    registerText:        'Sign Up',
 	    editProfileText:     '%u',
+            linkClass: 'button',
             mode: 'mtos',
             isPreview: false,
 	    returnToURL: null, 
@@ -35,22 +36,23 @@
 	function _insertText(obj) {
 	  var phrase = compileGreetingText();
 	  obj.empty().append( jQuery("<div>" + phrase + "</div>") );
-	  obj.children().children('a.button.login').click(    function() { return settings.onSignInClick($(this)); });
-	  obj.children().children('a.button.logout').click(   function() { return settings.onSignOutClick.call($(this)); });
-	  obj.children().children('a.button.register').click( function() { return settings.onSignUpClick.call($(this)); });
+	  obj.children().children('a.login').click(    function() { return settings.onSignInClick($(this)); });
+	  obj.children().children('a.logout').click(   function() { return settings.onSignOutClick.call($(this)); });
+	  obj.children().children('a.register').click( function() { return settings.onSignUpClick.call($(this)); });
 	};
 	function _signIn() {
 	    var url = mt.links.signIn;
+            if (url.match(/\?/)) { url += '&'; } else { url += '?'; }
 	    if (settings.isPreview) {
 		if ( mt.entry && mt.entry.id ) {
-		    url += '&entry_id=' + mt.entry.id;
+		    url += 'entry_id=' + mt.entry.id;
 		} else {
-		    url += '&return_url=' + settings.returnToURL;
+		    url += 'return_url=' + settings.returnToURL;
 		}
 	    } else {
 	      var doc_url = document.URL;
 	      doc_url = doc_url.replace(/#.+/, '');
-	      url += '&return_url=' + encodeURIComponent(doc_url);
+	      url += 'return_url=' + encodeURIComponent(doc_url);
 	    }
 	    $.fn.movabletype.clearUser();
 	    location.href = url;
@@ -61,7 +63,7 @@
 	    doc_url = doc_url.replace(/#.+/, '');
 	    // TODO - error check: signouturl not set?
 	    var url = mt.links.signOut;
-	    if (url.match(/\?/)) { url += '&'; } else { url += '?'; }
+            if (url.match(/\?/)) { url += '&'; } else { url += '?'; }
 	    if (settings.isPreview) {
 	      if ( mt.entry && mt.entry.id ) {
 		url += 'entry_id=' + mt.entry.id;
@@ -79,22 +81,24 @@
 	    return false;
 	};
 	function _onSignUpClick(e) {
-	    $.fn.movabletype.clearUser();
-	    var doc_url = document.URL;
-	    doc_url = doc_url.replace(/#.+/, '');
-	    // TODO - error check: signupurl not set?
-	    var url = mt.links.signUp;
-	    if (url.match(/\?/)) { url += '&'; } else { url += '?'; }
-	    if (settings.isPreview) {
-		if ( mt.entry && mt.entry.id ) {
-		  url += 'entry_id=' + mt.entry.id;
+	    try {
+		$.fn.movabletype.clearUser();
+		var doc_url = document.URL;
+		doc_url = doc_url.replace(/#.+/, '');
+		// TODO - error check: signupurl not set?
+		var url = mt.links.signUp;
+                if (url.match(/\?/)) { url += '&'; } else { url += '?'; }
+		if (settings.isPreview) {
+		    if ( mt.entry && mt.entry.id ) {
+			url += 'entry_id=' + mt.entry.id;
+		    } else {
+			url += 'return_url=' + settings.returnToURL;
+		    }
 		} else {
-		  url += 'return_url=' + settings.returnToURL;
+		    url += 'return_url=' + encodeURIComponent(doc_url);
 		}
-	    } else {
-		url += 'return_url=' + encodeURIComponent(doc_url);
-	    }
-	    location.href = url;
+		location.href = url;
+	    } catch(x) { alert(x.message); };
 	    return false;
 	};
 	function _onSignInClick(e) {
@@ -122,27 +126,27 @@
 		    phrase = settings.noPermissionText;
 		    //'You do not have permission to comment on this blog. (<a href="javascript:void(0);" onclick="return mtSignOutOnClick();">sign out</a>)';
 		} else {
-		    if ( u.is_author ) {
-		      if (mt.links.editProfile) {
-			profile_link = '<a href="'+mt.links.editProfile;
-		      } else if (settings.mode == "mtpro") {
-			profile_link = '<a href="'+mt.blog.community.script+'?__mode=edit&blog_id=' + mt.blog.id;
-		      } else {
-			profile_link = '<a href="'+mt.blog.comments.script+'?__mode=edit_profile&blog_id=' + mt.blog.id;
-		      }
-		      if (mt.entry && mt.entry.id)
-			profile_link += '&entry_id=' + mt.entry.id;
-		      if (settings.returnToURL)
-			profile_link += '&return_to=' + encodeURI(settings.returnToURL);
-		      profile_link += '">' + settings.editProfileText + '</a>';
+		  if ( u.is_author ) {
+		    if (mt.links.editProfile) {
+		      profile_link = '<a href="'+mt.links.editProfile;
+		    } else if (settings.mode == "mtpro") {
+		      profile_link = '<a href="'+mt.blog.community.script+'?__mode=edit&blog_id=' + mt.blog.id;
 		    } else {
-			// registered user, but not a user with posting rights
-			if (u.url)
-			    profile_link = '<a href="' + u.url + '">' + u.name + '</a>';
-			else
-			    profile_link = u.name;
+		      profile_link = '<a href="'+mt.blog.comments.script+'?__mode=edit_profile&blog_id=' + mt.blog.id;
 		    }
-		    phrase = settings.loggedInMessage;
+		    if (mt.entry && mt.entry.id)
+		      profile_link += '&entry_id=' + mt.entry.id;
+		    if (settings.returnToURL)
+		      profile_link += '&return_to=' + encodeURI(settings.returnToURL);
+		    profile_link += '">' + settings.editProfileText + '</a>';
+		  } else {
+		    // registered user, but not a user with posting rights
+		    if (u.url)
+		      profile_link = '<a href="' + u.url + '">' + u.name + '</a>';
+		    else
+		      profile_link = u.name;
+		  }
+		  phrase = settings.loggedInMessage;
 		}
 	    } else {
 		// TODO - this obviously does that same thing. 
@@ -152,9 +156,9 @@
 		    phrase = settings.loggedOutMessage;
 		}
 	    }
-	    var login_link    = '<a class="login button" href="javascript:void(0)">' + settings.loginText + '</a>';
-	    var logout_link   = '<a class="logout button" href="javascript:void(0)">' + settings.logoutText + '</a>';
-	    var register_link = '<a class="register button" href="javascript:void(0)">' + settings.registerText + '</a>';
+	    var login_link    = '<a class="login '+settings.linkClass+'" href="javascript:void(0)">' + settings.loginText + '</a>';
+	    var logout_link   = '<a class="logout '+settings.linkClass+'" href="javascript:void(0)">' + settings.logoutText + '</a>';
+	    var register_link = '<a class="register '+settings.linkClass+'" href="javascript:void(0)">' + settings.registerText + '</a>';
 
 	    phrase = phrase.replace(/\%p/,profile_link);
 	    phrase = phrase.replace(/\%i/,login_link);
