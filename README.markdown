@@ -96,6 +96,8 @@ your web site and blog:
   element when the user does NOT have permission to leave a
   comment. (default: 'Welcome, %p! %o')
 
+* `indicator` - A reference to a 16x16 indicator/spinner graphic
+
 * `loginText` - The text to use in the login link. 
   (default: 'Sign In')
 

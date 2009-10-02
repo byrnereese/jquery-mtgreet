@@ -11,12 +11,13 @@
 	    editProfileText:     '%u',
             linkClass: 'button',
             mode: 'mtos',
+            indicator:           mt.blog.staticWebPath+'images/indicator.white.gif',
             isPreview: false,
 	    returnToURL: null, 
 	    /* Events and Callbacks */
-	    onSignInClick:  function(e){ return _onSignInClick( $(e) ); },
-	    onSignOutClick: function(e){ return _onSignOutClick( $(e) ); },
-	    onSignUpClick:  function(e){ return _onSignUpClick( $(e) ); }
+	    onSignInClick:  function(e){ return signInClickHandler( $(e) ); },
+	    onSignOutClick: function(e){ return signOutClickHandler( $(e) ); },
+	    onSignUpClick:  function(e){ return signUpClickHandler( $(e) ); }
 	};
 	var self;
         var settings = $.extend( {}, defaults, options);
@@ -57,7 +58,10 @@
 	    $.fn.movabletype.clearUser();
 	    location.href = url;
 	};
-	function _onSignOutClick(e) {
+	// To make a static function:
+	// * pass in returnToURL
+	// * pass in isPreview
+	function signOutClickHandler(e) {
 	    $.fn.movabletype.clearUser();
 	    var doc_url = document.URL;
 	    doc_url = doc_url.replace(/#.+/, '');
@@ -80,29 +84,30 @@
 	    location.href = url;
 	    return false;
 	};
-	function _onSignUpClick(e) {
-	    try {
-		$.fn.movabletype.clearUser();
-		var doc_url = document.URL;
-		doc_url = doc_url.replace(/#.+/, '');
-		// TODO - error check: signupurl not set?
-		var url = mt.links.signUp;
-                if (url.match(/\?/)) { url += '&'; } else { url += '?'; }
-		if (settings.isPreview) {
-		    if ( mt.entry && mt.entry.id ) {
-			url += 'entry_id=' + mt.entry.id;
-		    } else {
-			url += 'return_url=' + settings.returnToURL;
-		    }
+	// To make a static function:
+	// * pass in returnToURL
+	// * pass in isPreview
+	function signUpClickHandler(e) {
+	    $.fn.movabletype.clearUser();
+	    var doc_url = document.URL;
+	    doc_url = doc_url.replace(/#.+/, '');
+	    // TODO - error check: signupurl not set?
+	    var url = mt.links.signUp;
+	    if (url.match(/\?/)) { url += '&'; } else { url += '?'; }
+	    if (settings.isPreview) {
+		if ( mt.entry && mt.entry.id ) {
+		    url += 'entry_id=' + mt.entry.id;
 		} else {
-		    url += 'return_url=' + encodeURIComponent(doc_url);
+		    url += 'return_url=' + settings.returnToURL;
 		}
-		location.href = url;
-	    } catch(x) { alert(x.message); };
+	    } else {
+		url += 'return_url=' + encodeURIComponent(doc_url);
+	    }
+	    location.href = url;
 	    return false;
 	};
-	function _onSignInClick(e) {
-	  var phrase = 'Signing in... <img src="'+mt.blog.staticWebPath+'images/indicator.white.gif" height="16" width="16" alt="" />';
+	function signInClickHandler(e) {
+	  var phrase = 'Signing in... <img src="'+settings.indicator+'" height="16" width="16" alt="" />';
 	  var target = e.parent().parent();
 	  target.html(phrase);
 	  $.fn.movabletype.clearUser(); // clear any 'anonymous' user cookie to allow sign in
@@ -124,7 +129,6 @@
 	    if ( u && u.is_authenticated ) {
 		if ( u.is_banned ) {
 		    phrase = settings.noPermissionText;
-		    //'You do not have permission to comment on this blog. (<a href="javascript:void(0);" onclick="return mtSignOutOnClick();">sign out</a>)';
 		} else {
 		  if ( u.is_author ) {
 		    if (mt.links.editProfile) {
