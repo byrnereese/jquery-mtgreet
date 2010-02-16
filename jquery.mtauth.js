@@ -47,7 +47,7 @@ jQuery.extend({ authchangeList: [], authHappened: false, needsAuth: false });
 	  u.is_anonymous = false;
 	} else {
 	  u.is_anonymous = true;
-          u.is_authenticated = false;
+      u.is_authenticated = false;
 	  u.can_post = false;
 	  u.is_author = false;
 	  u.is_banned = false;

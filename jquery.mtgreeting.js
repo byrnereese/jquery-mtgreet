@@ -9,9 +9,9 @@
 	    logoutText:          'Sign Out',
 	    registerText:        'Sign Up',
 	    editProfileText:     '%u',
+            indicator:           mt.blog.staticWebPath + 'images/indicator.white.gif',
             linkClass: 'button',
             mode: 'mtos',
-            indicator:           mt.blog.staticWebPath+'images/indicator.white.gif',
             isPreview: false,
 	    returnToURL: null, 
 	    /* Events and Callbacks */
