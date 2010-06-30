@@ -110,6 +110,12 @@ your web site and blog:
 * `editProfileText` - The text to use in the edit profile link.
   (default: '%u')
 
+* `ajaxLogin` - A boolean value indicating whether the framework
+  should first attempt to log the user into the CMS via an AJAX
+  call. Set to false if you want to forcibly send users to the
+  login screen, which can be useful if a page refresh is required
+  upon successfully signing in. (default: true)
+
 * `isPreview` - A boolean value indicating whether a user is
   currently previewing an entry or comment. (default: false)
 
