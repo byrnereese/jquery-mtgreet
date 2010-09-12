@@ -80,7 +80,7 @@ jQuery.extend({ authchangeList: [], authHappened: false, needsAuth: false });
             return $.fn.movabletype.setUser(u); 
           } 
         }; 
-	if ( $.fn.movabletype.getUser() && $.fn.movabletype.getUser().is_authenticated ) {
+	if ( $.fn.movabletype.getUser() && $.fn.movabletype.getUser().is_authenticated && $.fn.movabletype.getUser().sid) {
 	  // user is logged into current domain...
 	  var url = document.URL;
 	  url = url.replace(/#.+$/, '');
