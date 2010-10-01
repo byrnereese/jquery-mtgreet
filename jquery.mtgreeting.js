@@ -19,7 +19,11 @@
 	        editProfileText:     '%u',
             indicator:           mt.blog.staticWebPath + 'images/indicator.white.gif',
             linkClass:           'button',
+            loginClass:          'login',
+            logoutClass:         'logout',
+            registerClass:       'register',
             mode:                'mtos',
+            greetingContainerTag:  'div',
             isPreview:           false,
             ajaxLogin:           true,
 	        returnToURL: null, 
@@ -45,10 +49,10 @@
         
 	    function _insertText(obj) {
 	        var phrase = compileGreetingText();
-	        obj.empty().append( jQuery("<div>" + phrase + "</div>") );
-            obj.children().children('a.login').click(    function() { return settings.onSignInClick($(this)); });
-	        obj.children().children('a.logout').click(   function() { return settings.onSignOutClick.call($(this)); });
-	        obj.children().children('a.register').click( function() { return settings.onSignUpClick.call($(this)); });
+	        obj.empty().append( jQuery("<" + settings.greetingContainerTag  +">" + phrase + "</" + settings.greetingContainerTag  +">") );
+            obj.children().children('a.'+settings.loginClass).click(    function() { return settings.onSignInClick($(this)); });
+	        obj.children().children('a.'+settings.logoutClass).click(   function() { return settings.onSignOutClick.call($(this)); });
+	        obj.children().children('a.'+settings.registerClass).click( function() { return settings.onSignUpClick.call($(this)); });
 	    };
 	    function _signIn() {
 	        var url = mt.links.signIn;
@@ -173,9 +177,9 @@
 		            phrase = settings.loggedOutMessage;
 		        }
 	        }
-	        var login_link    = '<a class="login '+settings.linkClass+'" href="'+mt.links.signIn+'">' + settings.loginText + '</a>';
-	        var logout_link   = '<a class="logout '+settings.linkClass+'" href="'+mt.links.signOut+'">' + settings.logoutText + '</a>';
-	        var register_link = '<a class="register '+settings.linkClass+'" href="'+mt.links.signUp+'">' + settings.registerText + '</a>';
+	        var login_link    = '<a class="'+settings.loginClass+' '+settings.linkClass+'" href="'+mt.links.signIn+'">' + settings.loginText + '</a>';
+	        var logout_link   = '<a class="'+settings.logoutClass+' '+settings.linkClass+'" href="'+mt.links.signOut+'">' + settings.logoutText + '</a>';
+	        var register_link = '<a class="'+settings.registerClass+' '+settings.linkClass+'" href="'+mt.links.signUp+'">' + settings.registerText + '</a>';
 	        phrase = phrase.replace(/\%p/,profile_link);
 	        phrase = phrase.replace(/\%i/,login_link);
 	        phrase = phrase.replace(/\%o/,logout_link);
