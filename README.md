@@ -110,6 +110,18 @@ your web site and blog:
 * `editProfileText` - The text to use in the edit profile link.
   (default: '%u')
 
+* `greetingContainerTag` - The HTML tag to wrap the Greeting 
+  phrase in. (default: 'div')
+
+* `loginClass` - The CSS class name to be added to login links.
+  (default: 'login')
+
+* `logoutClass` - The CSS class name to be added to logout links.
+  (default: 'logout')
+
+* `registerClass` - The CSS class name to be added to register links.
+  (default: 'register')
+
 * `ajaxLogin` - A boolean value indicating whether the framework
   should first attempt to log the user into the CMS via an AJAX
   call. Set to false if you want to forcibly send users to the
