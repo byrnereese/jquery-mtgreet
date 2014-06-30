@@ -239,7 +239,7 @@ User object contains these elements:
 **Example**
 
     $('#userpic').onauthchange( function( e, u ) {
-      if (u.is_authenticted) {
+      if (u.is_authenticated) {
         $(this).html('<img src="'+u.userpic+'" />');
       } else {
         $(this).html('Not logged in');
